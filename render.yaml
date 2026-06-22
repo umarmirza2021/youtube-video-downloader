@@ -1,10 +1,10 @@
 # Render Blueprint — full-stack (UI + API on one URL)
-# Deploy: dashboard.render.com → New → Blueprint → connect GitHub repo
+# Repo: https://github.com/umarmirza2021/youtube-video-downloader
 services:
   - type: web
-    name: media-downloader
+    name: youtube-video-downloader
     runtime: docker
-    plan: starter
+    plan: free
     region: oregon
     dockerfilePath: ./Dockerfile
     dockerContext: .
@@ -15,14 +15,11 @@ services:
       - key: NODE_ENV
         value: production
       - key: CLIENT_ORIGIN
-        sync: false
-        # Set to your Render URL or custom domain, e.g. https://media-downloader.onrender.com
+        value: https://youtube-video-downloader.onrender.com
       - key: VITE_SITE_URL
-        sync: false
-        # Same as public URL — used at build time for sitemap/canonical
+        value: https://youtube-video-downloader.onrender.com
       - key: VITE_GITHUB_URL
-        sync: false
-        optional: true
+        value: https://github.com/umarmirza2021/youtube-video-downloader
       - key: RAPIDAPI_KEY
         sync: false
         optional: true
