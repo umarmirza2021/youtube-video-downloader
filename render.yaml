@@ -15,9 +15,9 @@ services:
       - key: NODE_ENV
         value: production
       - key: CLIENT_ORIGIN
-        value: https://youtube-video-downloader.onrender.com
+        value: https://youtube-video-downloader-r4v3.onrender.com
       - key: VITE_SITE_URL
-        value: https://youtube-video-downloader.onrender.com
+        value: https://youtube-video-downloader-r4v3.onrender.com
       - key: VITE_GITHUB_URL
         value: https://github.com/umarmirza2021/youtube-video-downloader
       - key: RAPIDAPI_KEY
