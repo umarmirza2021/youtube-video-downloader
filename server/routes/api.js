@@ -79,6 +79,7 @@ router.get('/health', async (_req, res) => {
       ytdlp: ytdlpOk,
       rapidapi: rapidapi.isAvailable(),
       instaloader: instaOk,
+      r2: downloader.useR2Storage(),
     },
   });
 });

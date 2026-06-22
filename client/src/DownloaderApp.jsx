@@ -225,7 +225,7 @@ export default function DownloaderApp({ page }) {
       .finally(() => setLoading(false));
   };
 
-  const handleDownload = (format) => {
+  const handleDownload = async (format) => {
     if (!activeUrl || !format) return;
 
     setDownloading(true);
@@ -233,8 +233,8 @@ export default function DownloaderApp({ page }) {
     setError(null);
 
     try {
-      triggerDownload(activeUrl, format, video?.title);
-      setToast('Download started — may take 30s to begin on first try. Try 360p if it fails.');
+      await triggerDownload(activeUrl, format, video?.title);
+      setToast('Download ready — check your browser downloads tab.');
       setTimeout(() => setToast(''), 6000);
 
       addEntry({
@@ -336,7 +336,7 @@ export default function DownloaderApp({ page }) {
       setProgress(0);
 
       try {
-        triggerDownload(item.url, selectedFormat, item.title);
+        await triggerDownload(item.url, selectedFormat, item.title);
 
         addEntry({
           url: item.url,

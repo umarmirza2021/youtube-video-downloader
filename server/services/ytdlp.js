@@ -1,29 +1,11 @@
 import { spawn } from 'child_process';
 import { promisify } from 'util';
 import { exec } from 'child_process';
+import { FAST_ARGS, DOWNLOAD_FAST_ARGS } from './ytdlp-args.js';
 
 const execAsync = promisify(exec);
 
 let ytdlpAvailable = null;
-
-const FAST_ARGS = [
-  '--no-warnings',
-  '--no-call-home',
-  '--extractor-args', 'youtube:player_client=android,web',
-  '--socket-timeout', '15',
-];
-
-const DOWNLOAD_FAST_ARGS = [
-  ...FAST_ARGS,
-  ...(process.platform !== 'win32' ? ['--ffmpeg-location', process.env.FFMPEG_PATH || '/usr/bin/ffmpeg'] : []),
-  '--concurrent-fragments', '4',
-  '--http-chunk-size', '10485760',
-  '--socket-timeout', '60',
-  '--retries', '5',
-  '--fragment-retries', '5',
-  '--no-mtime',
-  '--no-part',
-];
 
 export async function checkYtdlp() {
   if (ytdlpAvailable !== null) return ytdlpAvailable;

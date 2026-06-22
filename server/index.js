@@ -10,7 +10,7 @@ import apiRoutes from './routes/api.js';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const distPath = process.env.STATIC_DIR || path.join(__dirname, '..', 'client', 'dist');
 const isProduction = process.env.NODE_ENV === 'production';
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT || 3000;
 
 const allowedOrigins = (process.env.CLIENT_ORIGIN || 'http://localhost:5173')
   .split(',')
@@ -38,17 +38,21 @@ app.use(cors({
 app.use(express.json({ limit: '1mb' }));
 app.use(express.urlencoded({ extended: true, limit: '1mb' }));
 
+const rateWindow = parseInt(process.env.RATE_LIMIT_WINDOW || '900000', 10);
+const rateMax = parseInt(process.env.RATE_LIMIT_MAX || '100', 10);
+const downloadMax = parseInt(process.env.DOWNLOAD_RATE_LIMIT_MAX || '20', 10);
+
 const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 100,
+  windowMs: rateWindow,
+  max: rateMax,
   standardHeaders: true,
   legacyHeaders: false,
   message: { error: 'Too many requests. Please try again later.', code: 'RATE_LIMITED' },
 });
 
 const downloadLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 20,
+  windowMs: rateWindow,
+  max: downloadMax,
   standardHeaders: true,
   legacyHeaders: false,
   message: { error: 'Download limit reached. Please try again later.', code: 'RATE_LIMITED' },

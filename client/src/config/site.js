@@ -1,4 +1,4 @@
-export const SITE_NAME = 'Media Downloader';
+export const SITE_NAME = 'VidInSecs';
 
 export function getSiteUrl() {
   const configured = import.meta.env.VITE_SITE_URL;

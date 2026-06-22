@@ -89,9 +89,35 @@ export async function fetchUniversalInfo({ url, username, platform }) {
   return safeJson(res);
 }
 
-export function triggerDownload(url, format, videoTitle) {
+export async function triggerDownload(url, format, videoTitle) {
   if (!format?.quality) {
     throw new Error('Select a quality first');
+  }
+
+  const res = await fetch(apiUrl('/download'), {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      url,
+      quality: format.quality,
+      title: videoTitle || 'video',
+    }),
+  });
+
+  const contentType = res.headers.get('content-type') || '';
+
+  if (contentType.includes('application/json')) {
+    const data = await safeJson(res);
+    if (!res.ok) throw new Error(data.error || 'Download failed');
+    if (data.downloadUrl) {
+      window.open(data.downloadUrl, '_blank', 'noopener,noreferrer');
+      return data;
+    }
+  }
+
+  if (!res.ok) {
+    const data = await safeJson(res).catch(() => ({}));
+    throw new Error(data.error || `Download failed (${res.status})`);
   }
 
   const params = new URLSearchParams({
@@ -99,7 +125,6 @@ export function triggerDownload(url, format, videoTitle) {
     quality: format.quality,
     title: videoTitle || 'video',
   });
-
   startNativeDownload(`${apiUrl('/download')}?${params}`);
 }
 

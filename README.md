@@ -1,4 +1,4 @@
-# Media Downloader
+# VidInSecs — Multi-Platform Video Downloader
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
@@ -76,7 +76,9 @@ Copy the `https://….trycloudflare.com` URL when it appears. Keep the terminal 
 
 ## Deploy to production
 
-**Recommended:** [Render full-stack](DEPLOY.md) (one Docker service, one URL).
+**Recommended (fast, ~€4/mo):** [Hetzner + Cloudflare](DEPLOY-HETZNER.md) — VidInSecs.com with R2 storage.
+
+**Alternative:** [Render full-stack](DEPLOY.md) (one Docker service, one URL).
 
 ```powershell
 # Push to GitHub, then Render → New → Blueprint → connect repo

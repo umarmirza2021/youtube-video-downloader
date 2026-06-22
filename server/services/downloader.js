@@ -2,9 +2,15 @@ import * as ytdlp from './ytdlp.js';
 import * as rapidapi from './rapidapi.js';
 import * as cache from './cache.js';
 import * as quickMeta from './quick-meta.js';
+import * as r2 from './r2.js';
+import * as tempDownload from './temp-download.js';
 import { PRESET_FORMATS } from './preset-formats.js';
 import { QUALITY_FORMATS } from './format-map.js';
 import { streamProcessToResponse } from './stream-response.js';
+
+export function useR2Storage() {
+  return r2.isConfigured();
+}
 
 function cacheKey(url) {
   return url.trim().toLowerCase();
@@ -116,7 +122,39 @@ export async function getFormats(url) {
   };
 }
 
+export async function downloadVideoToR2(url, format) {
+  const ytdlpOk = await ytdlp.checkYtdlp();
+  if (!ytdlpOk) throw new Error('yt-dlp is not installed');
+
+  const ext = format.ext || 'mp4';
+  const safeTitle = (format.title || 'video').replace(/[^\w\s.-]/g, '').slice(0, 80);
+  const filename = `${safeTitle}.${ext}`;
+
+  const { filePath, ext: outExt, cleanup } = await tempDownload.downloadToTempFile(url, format);
+
+  try {
+    const key = r2.buildObjectKey(filename);
+    await r2.uploadFile(filePath, key, { ext: outExt || ext });
+    const downloadUrl = await r2.getDownloadUrl(key, filename);
+    const expiry = parseInt(process.env.R2_PRESIGN_EXPIRY || '3600', 10);
+
+    return {
+      downloadUrl,
+      filename,
+      storage: 'r2',
+      expiresIn: expiry,
+    };
+  } finally {
+    await cleanup();
+  }
+}
+
 export async function downloadVideo(url, format, res) {
+  if (useR2Storage()) {
+    const result = await downloadVideoToR2(url, format);
+    return res.json(result);
+  }
+
   const ytdlpOk = await ytdlp.checkYtdlp();
 
   if (ytdlpOk) {
