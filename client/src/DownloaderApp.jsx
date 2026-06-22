@@ -234,6 +234,8 @@ export default function DownloaderApp({ page }) {
 
     try {
       triggerDownload(activeUrl, format, video?.title);
+      setToast('Download started — may take 30s to begin on first try. Try 360p if it fails.');
+      setTimeout(() => setToast(''), 6000);
 
       addEntry({
         url: activeUrl,

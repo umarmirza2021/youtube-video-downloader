@@ -1,10 +1,12 @@
 /**
  * Stream a child process stdout to HTTP response.
- * Headers are sent only after the first byte — prevents 0-byte downloads on failure.
+ * Headers are sent immediately so browsers keep the download connection open
+ * while yt-dlp/ffmpeg starts (can take 10–30s on cold servers).
  */
 export function streamProcessToResponse(proc, res, { contentType, filename, classifyError }) {
   let started = false;
   let stderr = '';
+  let bytesWritten = 0;
 
   const start = () => {
     if (started) return;
@@ -13,10 +15,16 @@ export function streamProcessToResponse(proc, res, { contentType, filename, clas
     res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
     res.setHeader('Transfer-Encoding', 'chunked');
     res.setHeader('Cache-Control', 'no-store');
+    if (!res.headersSent) {
+      res.status(200);
+      if (typeof res.flushHeaders === 'function') res.flushHeaders();
+    }
   };
 
+  start();
+
   proc.stdout.on('data', (chunk) => {
-    start();
+    bytesWritten += chunk.length;
     res.write(chunk);
   });
 
@@ -25,16 +33,21 @@ export function streamProcessToResponse(proc, res, { contentType, filename, clas
   });
 
   proc.on('close', (code) => {
-    if (!started) {
-      const msg = stderr.trim() || 'Download failed — try a lower quality';
+    if (bytesWritten === 0) {
+      const msg = stderr.trim() || 'Download failed — try 360p or 480p quality';
       const classified = classifyError?.(msg) || { message: msg, code: 'DOWNLOAD_FAILED' };
       if (!res.headersSent) {
         res.status(422).json({ error: classified.message, code: classified.code });
+        return;
       }
-      return;
+      try {
+        res.write(`Download failed: ${classified.message}`);
+      } catch {
+        // response already closed
+      }
     }
     res.end();
-    if (code !== 0) {
+    if (code !== 0 && bytesWritten > 0) {
       console.error('Download process exited', code, stderr.slice(0, 400));
     }
   });

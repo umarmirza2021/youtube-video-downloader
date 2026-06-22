@@ -3,6 +3,7 @@ import * as rapidapi from './rapidapi.js';
 import * as cache from './cache.js';
 import * as quickMeta from './quick-meta.js';
 import { PRESET_FORMATS } from './preset-formats.js';
+import { QUALITY_FORMATS } from './format-map.js';
 import { streamProcessToResponse } from './stream-response.js';
 
 function cacheKey(url) {
@@ -20,17 +21,8 @@ export async function getQuickVideoInfo(url) {
     return { ...cached, formats: cached.formats || PRESET_FORMATS, cached: true };
   }
 
-  const [info, durationSeconds] = await Promise.all([
-    quickMeta.getQuickVideoInfo(url),
-    ytdlp.getDuration(url).catch(() => null),
-  ]);
-
-  if (durationSeconds) {
-    info.duration = quickMeta.parseDuration(durationSeconds);
-    info.formats = quickMeta.applyEstimatedSizes(info.formats || PRESET_FORMATS, durationSeconds);
-  } else {
-    info.formats = quickMeta.applyEstimatedSizes(info.formats || PRESET_FORMATS, 180);
-  }
+  const info = await quickMeta.getQuickVideoInfo(url);
+  info.formats = PRESET_FORMATS;
 
   cache.set(key, info);
   return info;
@@ -42,39 +34,40 @@ export async function enrichVideoInfo(url) {
     return { formats: PRESET_FORMATS, duration: null };
   }
 
-  const durationPromise = ytdlp.getDuration(url);
-
   try {
-    const [durationSeconds, full] = await Promise.all([
-      durationPromise,
-      ytdlp.getVideoInfo(url),
-    ]);
+    const full = await ytdlp.getVideoInfo(url);
+    let formats = quickMeta.mergeEnrichedFormats(PRESET_FORMATS, full.formats);
+
+    const missing = formats.filter((f) => !f.filesizeFormatted && QUALITY_FORMATS[f.quality]);
+    if (missing.length) {
+      const sizeMap = {};
+      await Promise.all(missing.map(async (f) => {
+        const bytes = await ytdlp.getFormatFilesize(url, QUALITY_FORMATS[f.quality].id);
+        if (bytes) sizeMap[f.quality] = bytes;
+      }));
+      formats = quickMeta.applyExactSizes(formats, sizeMap);
+    }
 
     const key = cacheKey(url);
     const existing = cache.get(key) || {};
     const merged = {
       ...existing,
       ...full,
-      duration: full.duration || quickMeta.parseDuration(durationSeconds),
-      formats: quickMeta.mergeEnrichedFormats(PRESET_FORMATS, full.formats),
+      formats,
       instant: false,
     };
     cache.set(key, merged);
     return {
       title: full.title,
       channel: full.channel,
-      duration: merged.duration,
+      duration: full.duration,
       thumbnail: full.thumbnail,
-      formats: merged.formats,
+      formats,
       engine: full.engine,
     };
   } catch {
-    const durationSeconds = await durationPromise.catch(() => null);
-    const estimated = quickMeta.applyEstimatedSizes(PRESET_FORMATS, durationSeconds);
-    return {
-      formats: estimated,
-      duration: quickMeta.parseDuration(durationSeconds),
-    };
+    const sizeMap = await ytdlp.getPresetFormatSizes(url, QUALITY_FORMATS).catch(() => ({}));
+    return { formats: quickMeta.applyExactSizes(PRESET_FORMATS, sizeMap) };
   }
 }
 

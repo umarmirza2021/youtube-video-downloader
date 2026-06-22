@@ -22,9 +22,11 @@ export default function FormatSelector({ formats, selected, onSelect, onDownload
             className={`format-btn ${selected?.quality === fmt.quality ? 'format-btn-active' : 'format-btn-inactive'}`}
           >
             {fmt.label}
-            {fmt.filesizeFormatted && (
+            {fmt.filesizeFormatted ? (
               <span className="block text-[10px] opacity-70 mt-0.5">{fmt.filesizeFormatted}</span>
-            )}
+            ) : enriching ? (
+              <span className="block text-[10px] opacity-50 mt-0.5">…</span>
+            ) : null}
           </button>
         ))}
       </div>
@@ -34,7 +36,7 @@ export default function FormatSelector({ formats, selected, onSelect, onDownload
           <div className="text-sm text-yt-muted">
             <span className="text-yt-text font-medium">{selected.label}</span>
             {selected.filesizeFormatted && (
-              <span> · Est. {selected.filesizeFormatted}</span>
+              <span> · {selected.filesizeFormatted}</span>
             )}
           </div>
           <button

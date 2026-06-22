@@ -163,8 +163,8 @@ router.post('/info', async (req, res) => {
   }
 });
 
-router.get('/enrich', async (req, res) => {
-  const { url } = req.query;
+async function handleEnrich(req, res) {
+  const url = req.body?.url || req.query?.url;
 
   if (!isValidYoutubeUrl(url)) {
     return res.status(400).json({
@@ -180,7 +180,10 @@ router.get('/enrich', async (req, res) => {
     const classified = downloader.classifyError(err);
     res.status(422).json({ error: classified.message, code: classified.code });
   }
-});
+}
+
+router.get('/enrich', handleEnrich);
+router.post('/enrich', handleEnrich);
 
 router.get('/formats', async (req, res) => {
   const { url } = req.query;

@@ -90,28 +90,18 @@ function formatFileSize(bytes) {
   return `${size.toFixed(i > 0 ? 1 : 0)} ${units[i]}`;
 }
 
-/** Rough size estimates from duration (shown while yt-dlp loads exact sizes) */
-export function applyEstimatedSizes(formats, durationSeconds) {
-  if (!durationSeconds) return formats;
-
-  const minutes = durationSeconds / 60;
-  const mbPerMinute = {
-    '1080p': 12,
-    '720p': 7,
-    '480p': 4,
-    '360p': 2.5,
-    audio: 1,
-  };
+/** Apply exact byte sizes from yt-dlp --print filesize lookups */
+export function applyExactSizes(formats, sizeMap) {
+  if (!sizeMap || !Object.keys(sizeMap).length) return formats;
 
   return formats.map((fmt) => {
-    if (fmt.filesizeFormatted) return fmt;
-    const mb = (mbPerMinute[fmt.quality] || 5) * minutes;
-    const bytes = mb * 1024 * 1024;
+    const bytes = sizeMap[fmt.quality];
+    if (!bytes) return fmt;
     return {
       ...fmt,
       filesize: bytes,
-      filesizeFormatted: `~${formatFileSize(bytes)}`,
-      estimated: true,
+      filesizeFormatted: formatFileSize(bytes),
+      estimated: false,
     };
   });
 }

@@ -126,8 +126,9 @@ function buildFormatOptions(formats) {
         ? `${videoFmt.format_id}+${audioFmt.format_id}`
         : videoFmt.format_id;
 
-      const size = (videoFmt.filesize || videoFmt.filesize_approx || 0) +
-        (needsMerge && audioFmt ? (audioFmt.filesize || audioFmt.filesize_approx || 0) : 0);
+      const videoSize = videoFmt.filesize || videoFmt.filesize_approx || 0;
+      const audioSize = needsMerge && audioFmt ? (audioFmt.filesize || audioFmt.filesize_approx || 0) : 0;
+      const size = videoSize + audioSize;
 
       options.push({
         id: formatId,
@@ -135,8 +136,8 @@ function buildFormatOptions(formats) {
         quality: `${height}p`,
         ext: 'mp4',
         type: 'video',
-        filesize: size || null,
-        filesizeFormatted: formatFileSize(size),
+        filesize: size > 0 ? size : null,
+        filesizeFormatted: size > 0 ? formatFileSize(size) : null,
         needsMerge,
       });
     }
@@ -178,6 +179,47 @@ function mapVideoInfo(data) {
     isPlaylist: false,
     engine: 'ytdlp',
   };
+}
+
+export async function getFormatFilesize(url, formatSelector) {
+  const available = await checkYtdlp();
+  if (!available || !formatSelector) return null;
+
+  try {
+    const { stdout } = await runYtdlp([
+      '-f', formatSelector,
+      '--print', 'filesize',
+      '--print', 'filesize_approx',
+      '--no-download',
+      '--no-playlist',
+      url,
+    ], { timeout: 25000 });
+
+    const lines = stdout.trim().split('\n').map((l) => l.trim()).filter(Boolean);
+    for (const line of lines) {
+      const n = parseInt(line, 10);
+      if (Number.isFinite(n) && n > 0) return n;
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+export async function getPresetFormatSizes(url, qualityFormats) {
+  const entries = Object.entries(qualityFormats);
+  const results = await Promise.all(
+    entries.map(async ([quality, preset]) => {
+      const bytes = await getFormatFilesize(url, preset.id);
+      return [quality, bytes];
+    }),
+  );
+
+  const sizes = {};
+  for (const [quality, bytes] of results) {
+    if (bytes) sizes[quality] = bytes;
+  }
+  return sizes;
 }
 
 export async function getDuration(url) {

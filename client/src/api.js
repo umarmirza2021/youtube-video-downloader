@@ -32,14 +32,17 @@ function apiUrl(path) {
   return `${base}${normalized}`;
 }
 
-/** Native browser download — streams directly, avoids fetch+blob timeouts on slow servers */
+/** Hidden iframe keeps the download connection alive while yt-dlp starts on the server */
 function startNativeDownload(downloadUrl) {
-  const link = document.createElement('a');
-  link.href = downloadUrl;
-  link.style.display = 'none';
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
+  let frame = document.getElementById('yt-download-frame');
+  if (!frame) {
+    frame = document.createElement('iframe');
+    frame.id = 'yt-download-frame';
+    frame.name = 'yt-download-frame';
+    frame.style.display = 'none';
+    document.body.appendChild(frame);
+  }
+  frame.src = downloadUrl;
 }
 
 export async function fetchVideoInfo(url) {
@@ -55,7 +58,11 @@ export async function fetchVideoInfo(url) {
 }
 
 export async function enrichVideoInfo(url) {
-  const res = await fetch(apiUrl(`/enrich?url=${encodeURIComponent(url)}`));
+  const res = await fetch(apiUrl('/enrich'), {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ url }),
+  });
   const data = await safeJson(res);
   if (!res.ok) throw new Error(data.error || 'Failed to enrich video info');
   return data;
