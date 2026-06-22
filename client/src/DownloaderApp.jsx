@@ -209,7 +209,7 @@ export default function DownloaderApp({ page }) {
       .finally(() => setLoading(false));
   };
 
-  const handleDownload = (format) => {
+  const handleDownload = async (format) => {
     if (!activeUrl || !format) return;
 
     setDownloading(true);
@@ -217,7 +217,7 @@ export default function DownloaderApp({ page }) {
     setError(null);
 
     try {
-      triggerDownload(activeUrl, format, video?.title);
+      await triggerDownload(activeUrl, format, video?.title);
 
       addEntry({
         url: activeUrl,
@@ -227,12 +227,10 @@ export default function DownloaderApp({ page }) {
         platform: 'youtube',
       });
 
-      setTimeout(() => {
-        setProgress(100);
-        setDownloading(false);
-      }, 1500);
+      setProgress(100);
     } catch (err) {
       setError(err.message);
+    } finally {
       setDownloading(false);
     }
   };
@@ -320,7 +318,7 @@ export default function DownloaderApp({ page }) {
       setProgress(0);
 
       try {
-        triggerDownload(item.url, selectedFormat, item.title);
+        await triggerDownload(item.url, selectedFormat, item.title);
 
         addEntry({
           url: item.url,

@@ -1,5 +1,6 @@
 import { spawn } from 'child_process';
 import { checkYtdlp, streamDownload } from './ytdlp.js';
+import { streamProcessToResponse } from './stream-response.js';
 import { promisify } from 'util';
 import { exec } from 'child_process';
 
@@ -160,16 +161,12 @@ export function streamUniversalDownload(url, format, platform, res) {
   }
 
   const mime = ext === 'mp3' ? 'audio/mpeg' : ext === 'jpg' || ext === 'png' ? 'image/jpeg' : 'video/mp4';
-  res.setHeader('Content-Type', mime);
-  res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
-  res.setHeader('Transfer-Encoding', 'chunked');
-
   const proc = streamDownload(url, format, {});
-  proc.stdout.pipe(res, { highWaterMark: 1024 * 1024 });
-  proc.on('close', (code) => {
-    if (code !== 0 && !res.headersSent) res.status(500).json({ error: 'Download failed' });
+  streamProcessToResponse(proc, res, {
+    contentType: mime,
+    filename,
+    classifyError: (msg) => ({ message: msg || 'Download failed', code: 'DOWNLOAD_FAILED' }),
   });
-  res.on('close', () => proc.kill());
   return proc;
 }
 

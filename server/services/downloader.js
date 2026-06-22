@@ -3,6 +3,7 @@ import * as rapidapi from './rapidapi.js';
 import * as cache from './cache.js';
 import * as quickMeta from './quick-meta.js';
 import { PRESET_FORMATS } from './preset-formats.js';
+import { streamProcessToResponse } from './stream-response.js';
 
 function cacheKey(url) {
   return url.trim().toLowerCase();
@@ -30,13 +31,20 @@ export async function enrichVideoInfo(url) {
     return { formats: PRESET_FORMATS, duration: null };
   }
 
+  const durationPromise = ytdlp.getDuration(url);
+
   try {
-    const full = await ytdlp.getVideoInfo(url);
+    const [durationSeconds, full] = await Promise.all([
+      durationPromise,
+      ytdlp.getVideoInfo(url),
+    ]);
+
     const key = cacheKey(url);
     const existing = cache.get(key) || {};
     const merged = {
       ...existing,
       ...full,
+      duration: full.duration || quickMeta.parseDuration(durationSeconds),
       formats: quickMeta.mergeEnrichedFormats(PRESET_FORMATS, full.formats),
       instant: false,
     };
@@ -44,13 +52,18 @@ export async function enrichVideoInfo(url) {
     return {
       title: full.title,
       channel: full.channel,
-      duration: full.duration,
+      duration: merged.duration,
       thumbnail: full.thumbnail,
       formats: merged.formats,
       engine: full.engine,
     };
   } catch {
-    return { formats: PRESET_FORMATS, duration: null };
+    const durationSeconds = await durationPromise.catch(() => null);
+    const estimated = quickMeta.applyEstimatedSizes(PRESET_FORMATS, durationSeconds);
+    return {
+      formats: estimated,
+      duration: quickMeta.parseDuration(durationSeconds),
+    };
   }
 }
 
@@ -122,29 +135,17 @@ export async function downloadVideo(url, format, res) {
 
 function streamYtdlp(url, format, res) {
   const ext = format.ext || 'mp4';
-  const safeTitle = (format.title || 'video').replace(/[^\w\s-]/g, '').slice(0, 80);
+  const safeTitle = (format.title || 'video').replace(/[^\w\s.-]/g, '').slice(0, 80);
   const filename = `${safeTitle}.${ext}`;
 
-  res.setHeader('Content-Type', ext === 'mp3' ? 'audio/mpeg' : 'video/mp4');
-  res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
-  res.setHeader('Transfer-Encoding', 'chunked');
-
-  const proc = ytdlp.streamDownload(url, format, {
-    onError: (msg) => {
-      console.error('yt-dlp stream error:', msg);
-    },
+  const proc = ytdlp.streamDownload(url, { ...format, title: format.title || safeTitle }, {
+    onError: (msg) => console.error('yt-dlp stream error:', msg),
   });
 
-  proc.stdout.pipe(res, { highWaterMark: 1024 * 1024 });
-
-  proc.on('close', (code) => {
-    if (code !== 0 && !res.headersSent) {
-      res.status(500).json({ error: 'Download failed' });
-    }
-  });
-
-  res.on('close', () => {
-    proc.kill();
+  streamProcessToResponse(proc, res, {
+    contentType: ext === 'mp3' ? 'audio/mpeg' : 'video/mp4',
+    filename,
+    classifyError: (msg) => classifyError(new Error(msg)),
   });
 
   return proc;

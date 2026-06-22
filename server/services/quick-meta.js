@@ -78,6 +78,44 @@ export async function getQuickVideoInfo(url) {
   };
 }
 
+function formatFileSize(bytes) {
+  if (!bytes) return null;
+  const units = ['B', 'KB', 'MB', 'GB'];
+  let size = bytes;
+  let i = 0;
+  while (size >= 1024 && i < units.length - 1) {
+    size /= 1024;
+    i++;
+  }
+  return `${size.toFixed(i > 0 ? 1 : 0)} ${units[i]}`;
+}
+
+/** Rough size estimates from duration (shown while yt-dlp loads exact sizes) */
+export function applyEstimatedSizes(formats, durationSeconds) {
+  if (!durationSeconds) return formats;
+
+  const minutes = durationSeconds / 60;
+  const mbPerMinute = {
+    '1080p': 12,
+    '720p': 7,
+    '480p': 4,
+    '360p': 2.5,
+    audio: 1,
+  };
+
+  return formats.map((fmt) => {
+    if (fmt.filesizeFormatted) return fmt;
+    const mb = (mbPerMinute[fmt.quality] || 5) * minutes;
+    const bytes = mb * 1024 * 1024;
+    return {
+      ...fmt,
+      filesize: bytes,
+      filesizeFormatted: `~${formatFileSize(bytes)}`,
+      estimated: true,
+    };
+  });
+}
+
 export function mergeEnrichedFormats(presets, enriched) {
   if (!enriched?.length) return presets;
 

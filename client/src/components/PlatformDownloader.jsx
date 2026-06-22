@@ -62,13 +62,13 @@ export default function PlatformDownloader({
     handleFetch();
   };
 
-  const handleDownload = (format) => {
+  const handleDownload = async (format) => {
     setDownloading(true);
     setProgress(-1);
     setError(null);
 
     try {
-      triggerUniversalDownload({
+      await triggerUniversalDownload({
         url: url.trim(),
         platform: platform.id,
         format,
@@ -85,12 +85,10 @@ export default function PlatformDownloader({
         platform: platform.id,
       });
 
-      setTimeout(() => {
-        setProgress(100);
-        setDownloading(false);
-      }, 1500);
+      setProgress(100);
     } catch (err) {
       setError(err.message);
+    } finally {
       setDownloading(false);
     }
   };

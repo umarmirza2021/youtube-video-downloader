@@ -15,10 +15,12 @@ const FAST_ARGS = [
 
 const DOWNLOAD_FAST_ARGS = [
   ...FAST_ARGS,
-  '--concurrent-fragments', '8',
+  ...(process.platform !== 'win32' ? ['--ffmpeg-location', process.env.FFMPEG_PATH || '/usr/bin/ffmpeg'] : []),
+  '--concurrent-fragments', '4',
   '--http-chunk-size', '10485760',
-  '--retries', '3',
-  '--fragment-retries', '3',
+  '--socket-timeout', '60',
+  '--retries', '5',
+  '--fragment-retries', '5',
   '--no-mtime',
   '--no-part',
 ];
@@ -176,6 +178,24 @@ function mapVideoInfo(data) {
     isPlaylist: false,
     engine: 'ytdlp',
   };
+}
+
+export async function getDuration(url) {
+  const available = await checkYtdlp();
+  if (!available) return null;
+
+  try {
+    const { stdout } = await runYtdlp([
+      '--print', 'duration',
+      '--no-playlist',
+      '--no-warnings',
+      url,
+    ], { timeout: 12000 });
+    const seconds = parseInt(stdout.trim(), 10);
+    return Number.isFinite(seconds) ? seconds : null;
+  } catch {
+    return null;
+  }
 }
 
 export async function getVideoInfo(url) {

@@ -11,8 +11,7 @@ async function safeJson(res) {
   } catch {
     if (text.includes('Not Found') || res.status === 404) {
       throw new Error(
-        'API server not reachable. Set VITE_API_URL in Netlify to your Render backend URL ' +
-        '(e.g. https://your-app.onrender.com/api) and redeploy.'
+        'API server not reachable. Check that the backend is running and redeploy if needed.'
       );
     }
     throw new Error(text.slice(0, 120) || `Server error (${res.status})`);
@@ -31,6 +30,31 @@ function apiUrl(path) {
   const base = getApiUrlOrThrow();
   const normalized = path.startsWith('/') ? path : `/${path}`;
   return `${base}${normalized}`;
+}
+
+async function downloadFile(downloadUrl, filename) {
+  const res = await fetch(downloadUrl);
+
+  const contentType = res.headers.get('content-type') || '';
+  if (!res.ok || contentType.includes('application/json')) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data.error || `Download failed (${res.status})`);
+  }
+
+  const blob = await res.blob();
+  if (blob.size < 1000) {
+    throw new Error('Download failed — empty file. Try 720p or 480p quality.');
+  }
+
+  const objectUrl = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = objectUrl;
+  link.download = filename;
+  link.style.display = 'none';
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  setTimeout(() => URL.revokeObjectURL(objectUrl), 15000);
 }
 
 export async function fetchVideoInfo(url) {
@@ -73,7 +97,7 @@ export async function fetchUniversalInfo({ url, username, platform }) {
   return safeJson(res);
 }
 
-export function triggerDownload(url, format, videoTitle) {
+export async function triggerDownload(url, format, videoTitle) {
   const params = new URLSearchParams({
     url,
     formatId: format.id,
@@ -85,15 +109,12 @@ export function triggerDownload(url, format, videoTitle) {
     title: videoTitle || 'video',
   });
 
-  const link = document.createElement('a');
-  link.href = `${apiUrl('/download')}?${params}`;
-  link.style.display = 'none';
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
+  const safeName = (videoTitle || 'video').replace(/[^\w\s.-]/g, '').slice(0, 80);
+  const ext = format.ext || 'mp4';
+  await downloadFile(`${apiUrl('/download')}?${params}`, `${safeName}.${ext}`);
 }
 
-export function triggerUniversalDownload({ url, platform, format, title, username, storyId }) {
+export async function triggerUniversalDownload({ url, platform, format, title, username, storyId }) {
   const params = new URLSearchParams({
     url: url || '',
     platform,
@@ -109,12 +130,9 @@ export function triggerUniversalDownload({ url, platform, format, title, usernam
     storyId: storyId || '',
   });
 
-  const link = document.createElement('a');
-  link.href = `${apiUrl('/universal/download')}?${params}`;
-  link.style.display = 'none';
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
+  const safeName = (title || 'download').replace(/[^\w\s.-]/g, '').slice(0, 80);
+  const ext = format.ext || 'mp4';
+  await downloadFile(`${apiUrl('/universal/download')}?${params}`, `${safeName}.${ext}`);
 }
 
 export async function checkHealth() {
