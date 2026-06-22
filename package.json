@@ -13,7 +13,9 @@
     "build:prod": "npm run install:all && npm run build",
     "docker:build": "docker build -t media-downloader .",
     "docker:run": "docker run -p 3001:3001 -p 10000:10000 -e CLIENT_ORIGIN=http://localhost:3001 -e PORT=3001 media-downloader",
-    "generate:seo": "node scripts/generate-seo-files.js"
+    "generate:seo": "node scripts/generate-seo-files.js",
+    "tunnel": "powershell -ExecutionPolicy Bypass -File scripts/start-tunnel.ps1",
+    "tunnel:build": "powershell -ExecutionPolicy Bypass -File scripts/start-tunnel.ps1 -Build"
   },
   "devDependencies": {
     "cross-env": "^7.0.3"

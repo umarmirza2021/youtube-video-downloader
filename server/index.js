@@ -22,11 +22,14 @@ app.set('trust proxy', 1);
 
 app.use(cors({
   origin(origin, callback) {
-    if (!origin || allowedOrigins.includes(origin) || allowedOrigins.includes('*')) {
-      callback(null, true);
-    } else {
-      callback(null, false);
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.includes('*') || allowedOrigins.includes(origin)) {
+      return callback(null, true);
     }
+    if (process.env.TUNNEL_MODE === '1' && /\.trycloudflare\.com$/.test(origin)) {
+      return callback(null, true);
+    }
+    callback(null, false);
   },
   methods: ['GET', 'POST'],
   allowedHeaders: ['Content-Type'],

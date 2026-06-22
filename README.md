@@ -64,6 +64,16 @@ npm start
 
 Open http://localhost:3001 — UI + API together.
 
+### Free public URL (Cloudflare Tunnel — fast like local)
+
+Expose your local server to the internet for free. See **[TUNNEL.md](TUNNEL.md)**.
+
+```powershell
+npm run tunnel
+```
+
+Copy the `https://….trycloudflare.com` URL when it appears. Keep the terminal open.
+
 ## Deploy to production
 
 **Recommended:** [Render full-stack](DEPLOY.md) (one Docker service, one URL).
