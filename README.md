@@ -45,7 +45,7 @@ winget install yt-dlp ffmpeg
 ### Run
 
 ```powershell
-git clone https://github.com/umarmirza2021/media-downloader.git
+git clone https://github.com/umarmirza2021/youtube-video-downloader.git
 cd media-downloader
 npm run install:all
 npm run dev:server   # Terminal 1 — API on :3001
@@ -78,7 +78,7 @@ Set these on Render:
 |----------|---------|
 | `CLIENT_ORIGIN` | `https://media-downloader.onrender.com` |
 | `VITE_SITE_URL` | `https://media-downloader.onrender.com` |
-| `VITE_GITHUB_URL` | `https://github.com/umarmirza2021/media-downloader` |
+| `VITE_GITHUB_URL` | `https://github.com/umarmirza2021/youtube-video-downloader` |
 
 Use the **Starter** plan (~$7/mo) for always-on performance. Free tier sleeps after 15 min idle.
 
@@ -123,7 +123,7 @@ CLIENT_ORIGIN=http://localhost:5173
 
 ```
 VITE_SITE_URL=https://yourdomain.com
-VITE_GITHUB_URL=https://github.com/umarmirza2021/media-downloader
+VITE_GITHUB_URL=https://github.com/umarmirza2021/youtube-video-downloader
 VITE_API_URL=           # only for split deploy (Netlify + Render)
 ```
 

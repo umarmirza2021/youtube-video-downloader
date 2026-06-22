@@ -10,5 +10,5 @@ export function getSiteUrl() {
 }
 
 export function getGitHubUrl() {
-  return import.meta.env.VITE_GITHUB_URL || 'https://github.com/umarmirza2021/media-downloader';
+  return import.meta.env.VITE_GITHUB_URL || 'https://github.com/umarmirza2021/youtube-video-downloader';
 }

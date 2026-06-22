@@ -24,7 +24,7 @@ git commit -m "Media Downloader — open source launch"
 Create a repo at [github.com/new](https://github.com/new), then:
 
 ```powershell
-git remote add origin https://github.com/umarmirza2021/media-downloader.git
+git remote add origin https://github.com/umarmirza2021/youtube-video-downloader.git
 git branch -M main
 git push -u origin main
 ```
@@ -44,7 +44,7 @@ Update `VITE_GITHUB_URL` in Render env vars and `README.md` with your real GitHu
 |-----|-------|----------|
 | `CLIENT_ORIGIN` | `https://media-downloader.onrender.com` | Yes |
 | `VITE_SITE_URL` | Same as your public URL | Yes (for SEO/sitemap) |
-| `VITE_GITHUB_URL` | `https://github.com/umarmirza2021/media-downloader` | Recommended |
+| `VITE_GITHUB_URL` | `https://github.com/umarmirza2021/youtube-video-downloader` | Recommended |
 | `RAPIDAPI_KEY` | Your RapidAPI key | Optional |
 
 5. Choose **Starter** plan ($7/mo) for always-on — recommended for a public SEO site
