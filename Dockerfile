@@ -1,5 +1,5 @@
-# Full-stack image: React UI + Express API (one URL for production)
-# Render: Dockerfile Path MUST be "Dockerfile" (NOT Dockerfile.api)
+# Full-stack: React UI + Express API
+# Render Dockerfile Path: Dockerfile (default)
 FROM node:20-bookworm-slim AS client-build
 WORKDIR /app
 COPY scripts/generate-seo-files.js ./scripts/
@@ -13,7 +13,7 @@ ENV VITE_SITE_URL=$VITE_SITE_URL
 ENV VITE_GITHUB_URL=$VITE_GITHUB_URL
 RUN node ../scripts/generate-seo-files.js && npm run build \
   && test -f dist/index.html \
-  && test -d dist/assets \
+  && ls dist/assets/*.js \
   && ls -la dist/assets/
 
 FROM node:20-bookworm-slim
@@ -30,10 +30,12 @@ COPY server/package*.json ./
 RUN npm ci --omit=dev
 COPY server ./
 
-COPY --from=client-build /app/client/dist /app/client/dist
-RUN test -f /app/client/dist/index.html && ls -la /app/client/dist/assets/
+# Copy frontend into server dir (reliable path for production)
+COPY --from=client-build /app/client/dist ./client-dist
+RUN test -f client-dist/index.html && ls -la client-dist/assets/
 
 ENV NODE_ENV=production
+ENV STATIC_DIR=/app/server/client-dist
 EXPOSE 10000
 
 HEALTHCHECK --interval=30s --timeout=10s --start-period=90s --retries=3 \

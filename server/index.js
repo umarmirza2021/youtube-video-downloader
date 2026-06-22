@@ -8,7 +8,7 @@ import { existsSync, readdirSync } from 'fs';
 import apiRoutes from './routes/api.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const distPath = path.join(__dirname, '..', 'client', 'dist');
+const distPath = process.env.STATIC_DIR || path.join(__dirname, '..', 'client', 'dist');
 const isProduction = process.env.NODE_ENV === 'production';
 const PORT = process.env.PORT || 3001;
 
@@ -69,7 +69,7 @@ if (existsSync(distPath)) {
 }
 
 if (!existsSync(distPath)) {
-  console.error('ERROR: client/dist missing — use Dockerfile (not Dockerfile.api) and redeploy');
+  console.error('ERROR: frontend not found at', distPath, '— redeploy with Dockerfile (not Dockerfile.api)');
 }
 
 app.listen(PORT, () => {
