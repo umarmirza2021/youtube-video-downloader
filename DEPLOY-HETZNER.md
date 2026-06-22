@@ -69,9 +69,21 @@ User → Cloudflare CDN (SSL, DDoS, cache) → Hetzner VPS (Nginx → Node/PM2 �
 
 ---
 
-## Part 3 — Cloudflare R2
+## Part 3 — Cloudflare R2 (optional — skip for now)
 
-### Create bucket
+**Skip R2 for now?** Add this to `server/.env` on the VPS:
+
+```bash
+SKIP_R2=1
+```
+
+Downloads will stream **directly from the VPS** (same as local testing). No R2 bucket needed. You can enable R2 later by filling in the keys and setting `SKIP_R2=0`.
+
+If R2 is configured but upload fails, the app **automatically falls back** to direct VPS streaming.
+
+---
+
+### Create bucket (when ready)
 
 1. Cloudflare Dashboard → **R2** → Create bucket
 2. Name: `vidinsecs-downloads`

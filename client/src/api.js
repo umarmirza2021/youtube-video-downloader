@@ -120,6 +120,21 @@ export async function triggerDownload(url, format, videoTitle) {
     throw new Error(data.error || `Download failed (${res.status})`);
   }
 
+  // Direct VPS stream (SKIP_R2=1 or R2 not configured)
+  if (contentType.includes('video/') || contentType.includes('audio/')) {
+    const blob = await res.blob();
+    if (blob.size < 1000) throw new Error('Download failed — empty file. Try 360p.');
+    const ext = format.ext || 'mp4';
+    const safeName = (videoTitle || 'video').replace(/[^\w\s.-]/g, '').slice(0, 80);
+    const objectUrl = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = objectUrl;
+    link.download = `${safeName}.${ext}`;
+    link.click();
+    setTimeout(() => URL.revokeObjectURL(objectUrl), 15000);
+    return { storage: 'direct' };
+  }
+
   const params = new URLSearchParams({
     url,
     quality: format.quality,

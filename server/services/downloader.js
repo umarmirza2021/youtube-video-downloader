@@ -8,8 +8,20 @@ import { PRESET_FORMATS } from './preset-formats.js';
 import { QUALITY_FORMATS } from './format-map.js';
 import { streamProcessToResponse } from './stream-response.js';
 
+export function isR2Skipped() {
+  const v = process.env.SKIP_R2 || process.env.R2_DISABLED || '';
+  return v === '1' || v === 'true' || v === 'yes';
+}
+
 export function useR2Storage() {
+  if (isR2Skipped()) return false;
   return r2.isConfigured();
+}
+
+export function getStorageMode() {
+  if (isR2Skipped()) return 'direct';
+  if (r2.isConfigured()) return 'r2';
+  return 'direct';
 }
 
 function cacheKey(url) {
@@ -151,8 +163,13 @@ export async function downloadVideoToR2(url, format) {
 
 export async function downloadVideo(url, format, res) {
   if (useR2Storage()) {
-    const result = await downloadVideoToR2(url, format);
-    return res.json(result);
+    try {
+      const result = await downloadVideoToR2(url, format);
+      return res.json(result);
+    } catch (err) {
+      console.error('R2 upload failed, serving directly from server:', err.message);
+      if (res.headersSent) throw err;
+    }
   }
 
   const ytdlpOk = await ytdlp.checkYtdlp();

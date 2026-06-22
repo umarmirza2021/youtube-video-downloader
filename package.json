@@ -16,7 +16,8 @@
     "generate:seo": "node scripts/generate-seo-files.js",
     "tunnel": "powershell -ExecutionPolicy Bypass -File scripts/start-tunnel.ps1",
     "tunnel:build": "powershell -ExecutionPolicy Bypass -File scripts/start-tunnel.ps1 -Build",
-    "deploy:hetzner": "bash deploy/hetzner/deploy.sh"
+    "deploy:hetzner": "bash deploy/hetzner/deploy.sh",
+    "local": "powershell -ExecutionPolicy Bypass -File scripts/start-local.ps1"
   },
   "devDependencies": {
     "cross-env": "^7.0.3"

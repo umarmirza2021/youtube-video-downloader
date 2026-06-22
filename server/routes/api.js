@@ -75,11 +75,13 @@ router.get('/health', async (_req, res) => {
   const instaOk = await instagram.checkInstaloader();
   res.json({
     status: 'ok',
+    storage: downloader.getStorageMode(),
     engines: {
       ytdlp: ytdlpOk,
       rapidapi: rapidapi.isAvailable(),
       instaloader: instaOk,
       r2: downloader.useR2Storage(),
+      r2Skipped: downloader.isR2Skipped(),
     },
   });
 });
