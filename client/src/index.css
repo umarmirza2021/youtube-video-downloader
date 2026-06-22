@@ -1,0 +1,31 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply min-h-screen antialiased;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply bg-yt-red hover:bg-red-600 text-white font-medium px-5 py-2.5 rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  .btn-secondary {
+    @apply bg-yt-hover hover:bg-yt-border text-yt-text font-medium px-4 py-2 rounded-lg transition-colors border border-yt-border;
+  }
+
+  .format-btn {
+    @apply px-4 py-2.5 rounded-lg border border-yt-border text-sm font-medium transition-all;
+  }
+
+  .format-btn-active {
+    @apply bg-yt-red border-yt-red text-white;
+  }
+
+  .format-btn-inactive {
+    @apply bg-yt-card text-yt-text hover:bg-yt-hover;
+  }
+}

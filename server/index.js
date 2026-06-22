@@ -1,0 +1,69 @@
+import 'dotenv/config';
+import express from 'express';
+import cors from 'cors';
+import rateLimit from 'express-rate-limit';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import { existsSync } from 'fs';
+import apiRoutes from './routes/api.js';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const distPath = path.join(__dirname, '..', 'client', 'dist');
+const isProduction = process.env.NODE_ENV === 'production';
+const PORT = process.env.PORT || 3001;
+
+const allowedOrigins = (process.env.CLIENT_ORIGIN || 'http://localhost:5173')
+  .split(',')
+  .map((o) => o.trim())
+  .filter(Boolean);
+
+const app = express();
+app.set('trust proxy', 1);
+
+app.use(cors({
+  origin(origin, callback) {
+    if (!origin || allowedOrigins.includes(origin) || allowedOrigins.includes('*')) {
+      callback(null, true);
+    } else {
+      callback(null, false);
+    }
+  },
+  methods: ['GET', 'POST'],
+  allowedHeaders: ['Content-Type'],
+}));
+
+app.use(express.json({ limit: '1mb' }));
+
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 100,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many requests. Please try again later.', code: 'RATE_LIMITED' },
+});
+
+const downloadLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 20,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Download limit reached. Please try again later.', code: 'RATE_LIMITED' },
+});
+
+app.use('/api', limiter);
+app.use('/api/download', downloadLimiter);
+app.use('/api/universal/download', downloadLimiter);
+app.use('/api', apiRoutes);
+
+if (existsSync(distPath)) {
+  app.use(express.static(distPath, { maxAge: isProduction ? '1d' : 0 }));
+  app.get('*', (req, res, next) => {
+    if (req.path.startsWith('/api')) return next();
+    res.sendFile(path.join(distPath, 'index.html'));
+  });
+}
+
+app.listen(PORT, () => {
+  console.log(`Server running on http://localhost:${PORT}`);
+  if (existsSync(distPath)) console.log('Serving frontend from client/dist');
+});

@@ -1,0 +1,40 @@
+# ═══════════════════════════════════════════════════════════════════════════
+# Netlify — Frontend only
+# ═══════════════════════════════════════════════════════════════════════════
+# REQUIRED env var (Site configuration → Environment variables):
+#   VITE_API_URL = https://media-downloader-api.onrender.com/api
+# Must end with /api. Redeploy after adding/changing.
+# ═══════════════════════════════════════════════════════════════════════════
+
+[build]
+  command = "npm run build:netlify"
+  publish = "client/dist"
+
+[build.environment]
+  NODE_VERSION = "20"
+  VITE_API_URL = "https://media-downloader-api.onrender.com/api"
+
+[context.production.environment]
+  VITE_API_URL = "https://media-downloader-api.onrender.com/api"
+
+[context.deploy-preview.environment]
+  VITE_API_URL = "https://media-downloader-api.onrender.com/api"
+
+# SPA fallback — static assets served first by Netlify CDN
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    Permissions-Policy = "camera=(), microphone=(), geolocation=()"
+
+[[headers]]
+  for = "/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"

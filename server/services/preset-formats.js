@@ -1,0 +1,42 @@
+export const PRESET_FORMATS = [
+  {
+    id: 'bestvideo[height<=1080][ext=mp4]+bestaudio[ext=m4a]/bestvideo[height<=1080]+bestaudio/best[height<=1080]/best',
+    label: '1080p MP4',
+    quality: '1080p',
+    ext: 'mp4',
+    type: 'video',
+    needsMerge: true,
+  },
+  {
+    id: 'bestvideo[height<=720][ext=mp4]+bestaudio[ext=m4a]/bestvideo[height<=720]+bestaudio/best[height<=720]/best',
+    label: '720p MP4',
+    quality: '720p',
+    ext: 'mp4',
+    type: 'video',
+    needsMerge: true,
+  },
+  {
+    id: 'bestvideo[height<=480][ext=mp4]+bestaudio[ext=m4a]/bestvideo[height<=480]+bestaudio/best[height<=480]/best',
+    label: '480p MP4',
+    quality: '480p',
+    ext: 'mp4',
+    type: 'video',
+    needsMerge: true,
+  },
+  {
+    id: 'bestvideo[height<=360][ext=mp4]+bestaudio[ext=m4a]/bestvideo[height<=360]+bestaudio/best[height<=360]/best',
+    label: '360p MP4',
+    quality: '360p',
+    ext: 'mp4',
+    type: 'video',
+    needsMerge: true,
+  },
+  {
+    id: 'bestaudio',
+    label: 'MP3 Audio',
+    quality: 'audio',
+    ext: 'mp3',
+    type: 'audio',
+    needsMerge: false,
+  },
+];

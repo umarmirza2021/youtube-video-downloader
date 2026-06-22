@@ -1,0 +1,21 @@
+{
+  "name": "youtube-downloader",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "install:all": "npm install --prefix server && npm install --prefix client",
+    "dev:server": "npm run dev --prefix server",
+    "dev:client": "npm run dev --prefix client",
+    "build": "npm run build --prefix client",
+    "build:netlify": "node scripts/validate-netlify-env.js && npm run install:all && npm run build",
+    "start": "npm start --prefix server",
+    "start:prod": "cross-env NODE_ENV=production npm start --prefix server",
+    "build:prod": "npm run install:all && npm run build",
+    "docker:build": "docker build -t media-downloader .",
+    "docker:run": "docker run -p 3001:3001 -p 10000:10000 -e CLIENT_ORIGIN=http://localhost:3001 -e PORT=3001 media-downloader",
+    "generate:seo": "node scripts/generate-seo-files.js"
+  },
+  "devDependencies": {
+    "cross-env": "^7.0.3"
+  }
+}
