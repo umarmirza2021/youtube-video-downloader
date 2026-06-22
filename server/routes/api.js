@@ -4,6 +4,7 @@ import { checkYtdlp } from '../services/ytdlp.js';
 import * as rapidapi from '../services/rapidapi.js';
 import * as universal from '../services/universal.js';
 import * as instagram from '../services/instagram.js';
+import { resolveFormat } from '../services/format-map.js';
 
 const router = Router();
 
@@ -12,34 +13,38 @@ function isValidYoutubeUrl(url) {
   return /(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/|playlist\?)|youtu\.be\/)/.test(url);
 }
 
-function parseFormatFromQuery(query) {
-  if (query.formatId) {
-    return {
-      id: query.formatId,
-      ext: query.ext || 'mp4',
-      type: query.type || 'video',
-      quality: query.quality || '',
-      needsMerge: query.needsMerge === '1' || query.needsMerge === 'true',
-      convertHorizontal: query.convertHorizontal === '1' || query.convertHorizontal === 'true',
-      watermark: query.watermark === '1' || query.watermark === 'true',
-      title: query.title || 'video',
-    };
+function parseFormatFromRequest(req) {
+  const body = req.body || {};
+  const query = req.query || {};
+
+  if (body.format) {
+    return resolveFormat(typeof body.format === 'string' ? JSON.parse(body.format) : body.format);
   }
 
   if (query.format) {
     try {
-      return typeof query.format === 'string' ? JSON.parse(query.format) : query.format;
+      const parsed = typeof query.format === 'string' ? JSON.parse(query.format) : query.format;
+      return resolveFormat(parsed);
     } catch {
       return null;
     }
   }
 
-  return null;
+  return resolveFormat({
+    quality: query.quality || body.quality,
+    formatId: query.formatId || body.formatId,
+    ext: query.ext || body.ext,
+    type: query.type || body.type,
+    needsMerge: query.needsMerge || body.needsMerge,
+    convertHorizontal: query.convertHorizontal || body.convertHorizontal,
+    watermark: query.watermark || body.watermark,
+    title: query.title || body.title || 'video',
+  });
 }
 
 async function handleDownload(req, res) {
   const url = req.body?.url || req.query?.url;
-  const format = req.body?.format || parseFormatFromQuery(req.query);
+  const format = parseFormatFromRequest(req);
 
   if (!isValidYoutubeUrl(url)) {
     return res.status(400).json({
@@ -48,9 +53,9 @@ async function handleDownload(req, res) {
     });
   }
 
-  if (!format || !format.id) {
+  if (!format?.id) {
     return res.status(400).json({
-      error: 'Format is required',
+      error: 'Quality is required (e.g. 720p, 480p, audio)',
       code: 'MISSING_FORMAT',
     });
   }
@@ -111,14 +116,14 @@ async function handleUniversalDownload(req, res) {
   const platform = req.body?.platform || req.query?.platform;
   const username = req.body?.username || req.query?.username;
   const storyId = req.body?.storyId || req.query?.storyId;
-  const format = req.body?.format || parseFormatFromQuery(req.query);
+  const format = parseFormatFromRequest(req);
 
   if (!platform) {
     return res.status(400).json({ error: 'Platform is required', code: 'MISSING_PLATFORM' });
   }
 
   if (!format?.id) {
-    return res.status(400).json({ error: 'Format is required', code: 'MISSING_FORMAT' });
+    return res.status(400).json({ error: 'Quality is required', code: 'MISSING_FORMAT' });
   }
 
   try {

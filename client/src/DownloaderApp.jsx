@@ -132,7 +132,15 @@ export default function DownloaderApp({ page }) {
             title: info.title || prev.title,
             channel: info.channel || prev.channel,
             thumbnail: info.thumbnail || prev.thumbnail,
+            duration: info.duration ?? prev.duration,
+            formats: info.formats || prev.formats,
           } : info);
+          if (info.formats?.length) {
+            setSelectedFormat((prev) => {
+              if (!prev) return info.formats[0];
+              return info.formats.find((f) => f.quality === prev.quality) || info.formats[0];
+            });
+          }
         })
         .catch((err) => setError(err.message));
       return;
@@ -192,7 +200,15 @@ export default function DownloaderApp({ page }) {
             title: info.title || prev.title,
             channel: info.channel || prev.channel,
             thumbnail: info.thumbnail || prev.thumbnail,
+            duration: info.duration ?? prev.duration,
+            formats: info.formats || prev.formats,
           } : info);
+          if (info.formats?.length) {
+            setSelectedFormat((prev) => {
+              if (!prev) return info.formats[0];
+              return info.formats.find((f) => f.quality === prev.quality) || info.formats[0];
+            });
+          }
         })
         .catch((err) => setError(err.message));
       return;
@@ -209,7 +225,7 @@ export default function DownloaderApp({ page }) {
       .finally(() => setLoading(false));
   };
 
-  const handleDownload = async (format) => {
+  const handleDownload = (format) => {
     if (!activeUrl || !format) return;
 
     setDownloading(true);
@@ -217,7 +233,7 @@ export default function DownloaderApp({ page }) {
     setError(null);
 
     try {
-      await triggerDownload(activeUrl, format, video?.title);
+      triggerDownload(activeUrl, format, video?.title);
 
       addEntry({
         url: activeUrl,
@@ -231,7 +247,7 @@ export default function DownloaderApp({ page }) {
     } catch (err) {
       setError(err.message);
     } finally {
-      setDownloading(false);
+      setTimeout(() => setDownloading(false), 1500);
     }
   };
 
@@ -318,7 +334,7 @@ export default function DownloaderApp({ page }) {
       setProgress(0);
 
       try {
-        await triggerDownload(item.url, selectedFormat, item.title);
+        triggerDownload(item.url, selectedFormat, item.title);
 
         addEntry({
           url: item.url,
@@ -327,6 +343,10 @@ export default function DownloaderApp({ page }) {
           format: selectedFormat.label,
           platform: 'youtube',
         });
+
+        if (i < total - 1) {
+          await new Promise((resolve) => setTimeout(resolve, 4000));
+        }
       } catch (err) {
         setError(`Failed on "${item.title}": ${err.message}`);
         break;

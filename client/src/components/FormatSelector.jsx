@@ -15,11 +15,11 @@ export default function FormatSelector({ formats, selected, onSelect, onDownload
       <div className="flex flex-wrap gap-2 mb-5">
         {formats.map((fmt) => (
           <button
-            key={fmt.id}
+            key={fmt.quality}
             type="button"
             onClick={() => onSelect(fmt)}
             disabled={downloading}
-            className={`format-btn ${selected?.id === fmt.id ? 'format-btn-active' : 'format-btn-inactive'}`}
+            className={`format-btn ${selected?.quality === fmt.quality ? 'format-btn-active' : 'format-btn-inactive'}`}
           >
             {fmt.label}
             {fmt.filesizeFormatted && (

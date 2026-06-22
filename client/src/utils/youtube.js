@@ -1,45 +1,43 @@
-export const PRESET_FORMATS = [
-  {
-    id: 'bestvideo[height<=1080][ext=mp4]+bestaudio[ext=m4a]/bestvideo[height<=1080]+bestaudio/best[height<=1080]/best',
-    label: '1080p MP4',
-    quality: '1080p',
-    ext: 'mp4',
-    type: 'video',
-    needsMerge: true,
-  },
-  {
-    id: 'bestvideo[height<=720][ext=mp4]+bestaudio[ext=m4a]/bestvideo[height<=720]+bestaudio/best[height<=720]/best',
-    label: '720p MP4',
-    quality: '720p',
-    ext: 'mp4',
-    type: 'video',
-    needsMerge: true,
-  },
-  {
-    id: 'bestvideo[height<=480][ext=mp4]+bestaudio[ext=m4a]/bestvideo[height<=480]+bestaudio/best[height<=480]/best',
-    label: '480p MP4',
-    quality: '480p',
-    ext: 'mp4',
-    type: 'video',
-    needsMerge: true,
-  },
-  {
-    id: 'bestvideo[height<=360][ext=mp4]+bestaudio[ext=m4a]/bestvideo[height<=360]+bestaudio/best[height<=360]/best',
-    label: '360p MP4',
-    quality: '360p',
-    ext: 'mp4',
-    type: 'video',
-    needsMerge: true,
-  },
-  {
-    id: 'bestaudio',
-    label: 'MP3 Audio',
-    quality: 'audio',
-    ext: 'mp3',
-    type: 'audio',
-    needsMerge: false,
-  },
-];
+const MB_PER_MINUTE = {
+  '1080p': 12,
+  '720p': 7,
+  '480p': 4,
+  '360p': 2.5,
+  audio: 1,
+};
+
+function formatFileSize(bytes) {
+  const units = ['B', 'KB', 'MB', 'GB'];
+  let size = bytes;
+  let i = 0;
+  while (size >= 1024 && i < units.length - 1) {
+    size /= 1024;
+    i++;
+  }
+  return `${size.toFixed(i > 0 ? 1 : 0)} ${units[i]}`;
+}
+
+function withEstimatedSizes(formats, durationSeconds = 180) {
+  const minutes = durationSeconds / 60;
+  return formats.map((fmt) => {
+    const mb = (MB_PER_MINUTE[fmt.quality] || 5) * minutes;
+    const bytes = mb * 1024 * 1024;
+    return {
+      ...fmt,
+      filesize: bytes,
+      filesizeFormatted: `~${formatFileSize(bytes)}`,
+      estimated: true,
+    };
+  });
+}
+
+export const PRESET_FORMATS = withEstimatedSizes([
+  { label: '1080p MP4', quality: '1080p', ext: 'mp4', type: 'video' },
+  { label: '720p MP4', quality: '720p', ext: 'mp4', type: 'video' },
+  { label: '480p MP4', quality: '480p', ext: 'mp4', type: 'video' },
+  { label: '360p MP4', quality: '360p', ext: 'mp4', type: 'video' },
+  { label: 'MP3 Audio', quality: 'audio', ext: 'mp3', type: 'audio' },
+]);
 
 export function extractVideoId(url) {
   const patterns = [

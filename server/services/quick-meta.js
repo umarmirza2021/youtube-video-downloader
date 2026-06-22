@@ -125,9 +125,10 @@ export function mergeEnrichedFormats(presets, enriched) {
     return {
       ...preset,
       id: match.id || preset.id,
-      filesize: match.filesize,
-      filesizeFormatted: match.filesizeFormatted,
+      filesize: match.filesize ?? preset.filesize,
+      filesizeFormatted: match.filesizeFormatted || preset.filesizeFormatted,
       needsMerge: match.needsMerge ?? preset.needsMerge,
+      estimated: match.filesizeFormatted ? false : preset.estimated,
     };
   });
 }

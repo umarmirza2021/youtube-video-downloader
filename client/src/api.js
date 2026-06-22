@@ -32,29 +32,14 @@ function apiUrl(path) {
   return `${base}${normalized}`;
 }
 
-async function downloadFile(downloadUrl, filename) {
-  const res = await fetch(downloadUrl);
-
-  const contentType = res.headers.get('content-type') || '';
-  if (!res.ok || contentType.includes('application/json')) {
-    const data = await res.json().catch(() => ({}));
-    throw new Error(data.error || `Download failed (${res.status})`);
-  }
-
-  const blob = await res.blob();
-  if (blob.size < 1000) {
-    throw new Error('Download failed — empty file. Try 720p or 480p quality.');
-  }
-
-  const objectUrl = URL.createObjectURL(blob);
+/** Native browser download — streams directly, avoids fetch+blob timeouts on slow servers */
+function startNativeDownload(downloadUrl) {
   const link = document.createElement('a');
-  link.href = objectUrl;
-  link.download = filename;
+  link.href = downloadUrl;
   link.style.display = 'none';
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
-  setTimeout(() => URL.revokeObjectURL(objectUrl), 15000);
 }
 
 export async function fetchVideoInfo(url) {
@@ -97,21 +82,18 @@ export async function fetchUniversalInfo({ url, username, platform }) {
   return safeJson(res);
 }
 
-export async function triggerDownload(url, format, videoTitle) {
+export function triggerDownload(url, format, videoTitle) {
+  if (!format?.quality) {
+    throw new Error('Select a quality first');
+  }
+
   const params = new URLSearchParams({
     url,
-    formatId: format.id,
-    ext: format.ext || 'mp4',
-    type: format.type || 'video',
-    quality: format.quality || '',
-    needsMerge: format.needsMerge ? '1' : '0',
-    convertHorizontal: format.convertHorizontal ? '1' : '0',
+    quality: format.quality,
     title: videoTitle || 'video',
   });
 
-  const safeName = (videoTitle || 'video').replace(/[^\w\s.-]/g, '').slice(0, 80);
-  const ext = format.ext || 'mp4';
-  await downloadFile(`${apiUrl('/download')}?${params}`, `${safeName}.${ext}`);
+  startNativeDownload(`${apiUrl('/download')}?${params}`);
 }
 
 export async function triggerUniversalDownload({ url, platform, format, title, username, storyId }) {
@@ -130,9 +112,7 @@ export async function triggerUniversalDownload({ url, platform, format, title, u
     storyId: storyId || '',
   });
 
-  const safeName = (title || 'download').replace(/[^\w\s.-]/g, '').slice(0, 80);
-  const ext = format.ext || 'mp4';
-  await downloadFile(`${apiUrl('/universal/download')}?${params}`, `${safeName}.${ext}`);
+  startNativeDownload(`${apiUrl('/universal/download')}?${params}`);
 }
 
 export async function checkHealth() {

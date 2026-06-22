@@ -20,7 +20,18 @@ export async function getQuickVideoInfo(url) {
     return { ...cached, formats: cached.formats || PRESET_FORMATS, cached: true };
   }
 
-  const info = await quickMeta.getQuickVideoInfo(url);
+  const [info, durationSeconds] = await Promise.all([
+    quickMeta.getQuickVideoInfo(url),
+    ytdlp.getDuration(url).catch(() => null),
+  ]);
+
+  if (durationSeconds) {
+    info.duration = quickMeta.parseDuration(durationSeconds);
+    info.formats = quickMeta.applyEstimatedSizes(info.formats || PRESET_FORMATS, durationSeconds);
+  } else {
+    info.formats = quickMeta.applyEstimatedSizes(info.formats || PRESET_FORMATS, 180);
+  }
+
   cache.set(key, info);
   return info;
 }
