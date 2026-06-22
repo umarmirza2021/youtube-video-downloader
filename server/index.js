@@ -59,6 +59,8 @@ if (existsSync(distPath)) {
   app.use(express.static(distPath, { maxAge: isProduction ? '1d' : 0 }));
   app.get('*', (req, res, next) => {
     if (req.path.startsWith('/api')) return next();
+    // Don't SPA-fallback missing static files (e.g. /assets/*.js)
+    if (/\.[a-zA-Z0-9]+$/.test(req.path)) return res.status(404).send('Not found');
     res.sendFile(path.join(distPath, 'index.html'));
   });
 }
