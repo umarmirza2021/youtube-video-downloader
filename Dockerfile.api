@@ -1,3 +1,5 @@
+# API-only image — DO NOT use for Render full-stack deploy!
+# Render Dockerfile Path must be "Dockerfile" (this file has no React UI).
 # API-only image for Render (no frontend — Netlify hosts the UI)
 FROM node:20-bookworm-slim
 

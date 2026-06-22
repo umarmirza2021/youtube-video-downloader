@@ -1,4 +1,5 @@
 # Full-stack image: React UI + Express API (one URL for production)
+# Render: Dockerfile Path MUST be "Dockerfile" (NOT Dockerfile.api)
 FROM node:20-bookworm-slim AS client-build
 WORKDIR /app
 COPY scripts/generate-seo-files.js ./scripts/
@@ -6,11 +7,14 @@ COPY client/package*.json ./client/
 WORKDIR /app/client
 RUN npm ci
 COPY client ./
-ARG VITE_SITE_URL=
-ARG VITE_GITHUB_URL=
+ARG VITE_SITE_URL=https://youtube-video-downloader-r4v3.onrender.com
+ARG VITE_GITHUB_URL=https://github.com/umarmirza2021/youtube-video-downloader
 ENV VITE_SITE_URL=$VITE_SITE_URL
 ENV VITE_GITHUB_URL=$VITE_GITHUB_URL
-RUN node ../scripts/generate-seo-files.js && npm run build
+RUN node ../scripts/generate-seo-files.js && npm run build \
+  && test -f dist/index.html \
+  && test -d dist/assets \
+  && ls -la dist/assets/
 
 FROM node:20-bookworm-slim
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -27,6 +31,7 @@ RUN npm ci --omit=dev
 COPY server ./
 
 COPY --from=client-build /app/client/dist /app/client/dist
+RUN test -f /app/client/dist/index.html && ls -la /app/client/dist/assets/
 
 ENV NODE_ENV=production
 EXPOSE 10000
